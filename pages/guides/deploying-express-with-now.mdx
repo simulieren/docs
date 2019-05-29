@@ -7,7 +7,7 @@ import Card from '~/components/card'
 export const meta = {
   title: 'Deploying Express.js with Now',
   description:
-    'Learn how to best deploy your Express app in a Serverless environment.',
+    'Learn how to best deploy an Express app in a Serverless environment.',
   published: '2019-05-24T20:03:07.360Z',
   authors: ['paulogdm'],
   url: '/guides/deploying-express-with-now',
@@ -15,24 +15,46 @@ export const meta = {
   lastEdited: '2019-05-24T20:03:07.360Z'
 }
 
-[Express.js](https://expressjs.com) is a [very popular](https://stackoverflow.com/questions/tagged/express) Node.js framework that serves as a base for applications everywhere. Commonly used for monolithic and server-oriented environments, with [Now](https://now.sh) you are still able to use it in a Serverless with a few lines of configuration.
+[Express.js](https://expressjs.com) is a [very popular](https://stackoverflow.com/questions/tagged/express) Node.js framework that serves as a base for applications everywhere. Commonly used for monolithic and server-oriented environments, with [Now](https://now.sh) you will be able to deploy a Serverless with a few lines of configuration.
 
 In this guide, we will walk you through the steps necessary to deploy an optimized [Express.js](https://expressjs.com/) app to Now, basic concepts of the platform and also a simple but effective way to make your app faster.
 
 ## Step 1: Builders
 
+Let's start with a typical [Express.js]() app:
+
+```js
+var app = require('express')()
+var { getPets, postPets } = require('pets.js')
+var { postOwner, deleteOwner } = require('owner.js')
+
+app.get('/', (req, res) => { res.send('hello world') })
+app.get('/pet/:id', getPets)
+app.post('/pet', postPets)
+app.post('/owner', postOwner)
+app.delete('/owner', deleteOwner)
+app.listen(3000)
+```
+<Caption>
+  Example of{' '}
+  <GenericLink href="https://expressjs.com/">
+    Express.js
+  </GenericLink>{' '}app with three routes.
+</Caption>
+
 Every dynamic deployment in Now requires a builder.
-You can imagine a builder as being a little helper that will make your code smaller and also produce a set of results.
-In fact, it is a little adapter that will wrap your application in a way that it can easily interface with specific Lambda formats and other requirements of the environment.
+We can imagine a builder as being a little helper that will make our code smaller and also produce a set of results.
+In fact, it is a little adapter that will wrap our application in a way that it can easily interface with specific Lambda formats and other requirements of the environment.
 
 For this guide, we will use two of the official builders, `@now/node` and `@now/node-server`. The first is the recommended one since the overhead of listening to a server in a lambda environment can be noticeable and affect performance.
 
-If your app is listening to a port, the following configuration is needed:
+Using our first block of code as an example, the following configuration would be needed:
 
 ```json
 {
   "version": 2,
-  "builds": [{"src": "myapp.js", "use": "@now/node-server"}]
+  "builds": [{"src": "myapp.js", "use": "@now/node-server"}],
+  "routes": [{"src": "/(.*)", "dest": "/myapp.js"}]
 }
 ```
 <Caption>
@@ -42,28 +64,21 @@ If your app is listening to a port, the following configuration is needed:
   </GenericLink>.
 </Caption>
 
-However, with a little adaptation, you can use `@now/node` to fully enjoy the power of a Serverless environment. Previously the code of your application would look like:
+However, with a little adaptation, we can use `@now/node` to fully enjoy the power of a Serverless environment.
+If we insert the line `module.exports = app` and also listen to a port conditionally, for example:
 
 ```js
 var app = require('express')()
+var { getPets, postPets } = require('pets.js')
+var { postOwner, deleteOwner } = require('owner.js')
 
 app.get('/', (req, res) => { res.send('hello world') })
-app.listen(3000)
-```
-<Caption>
-  Example of{' '}
-  <GenericLink href="https://expressjs.com/">
-    Express.js
-  </GenericLink>{' '} app.
-</Caption>
+app.get('/pet/:id', getPets)
+app.post('/pet', postPets)
+app.post('/owner', postOwner)
+app.delete('/owner', deleteOwner)
 
-But if you insert the line `module.exports = app` and also listen to a port conditionally, for example:
-
-```js
-var app = require('express')()
-
-app.get('/', (req, res) => { res.send('hello world') })
-if (!process.env.NOW_REGION) app.listen(3000) // if code is not in Now platform
+if (!process.env.NOW_REGION) app.listen(3000) // if code is not in a NOW Region
 
 module.exports = app
 ```
@@ -74,12 +89,13 @@ module.exports = app
   </GenericLink>{' '} adapted for <InlineCode>@now/node</InlineCode>.
 </Caption>
 
-You will allow your app to use `@now/node`:
+We will allow our app to use `@now/node`:
 
 ```json
 {
   "version": 2,
-  "builds": [{"src": "myapp.js", "use": "@now/node"}]
+  "builds": [{"src": "myapp.js", "use": "@now/node"}],
+  "routes": [{"src": "/(.*)", "dest": "/myapp.js"}]
 }
 ```
 <Caption>
@@ -93,9 +109,11 @@ You will allow your app to use `@now/node`:
   </GenericLink>.
 </Caption>
 
+That is possible because `@now/node` [requires a function handler](https://zeit.co/docs/v2/deployments/official-builders/node-js-now-node/#when-to-use-it) in the format `module.exports = (req, res) => {...}` and when creating a new Express instance, that is exactly what it is internally.
+
 ## Step 2: Routing
 
-In a typical Express application, it is very common to write a series of functions with callbacks to handle your entry points.
+It is very common to write a series of functions with callbacks to handle a set of entry points. From our last code block, let's cut it out a little bit so we can focus on the concepts of routing:
 
 ```js
 var app = require('express')()
@@ -114,12 +132,39 @@ module.exports = app
   </GenericLink>{' '}app with three routes.
 </Caption>
 
-Now 2.0, by default, handles the routing of your app like how files are arranged in the filesystem, the only route that will work is `/`. Any attempts to fetch `/pet/1` will result in a 404. To avoid that a `"routes"` entry in the `now.json` is needed:
+When using Now, the platform will handle the routing of the app like how files are arranged in the filesystem. Any attempt to fetch `/pet/1` will result in a 404 because `/pet/1` doesn't exist. So we need the following configuration:
 
 ```json
-"routes": [
-  {"src": "/(.*)", "dest": "/myapp.js"}
-]
+{
+  "version": 2,
+  "builds": [{"src": "myapp.js", "use": "@now/node"}],
+  "routes": [
+    {"src": "/", "dest": "/myapp.js"},
+    {"src": "/pet", "dest": "/myapp.js"},
+    {"src": "/pet/[^/]+", "dest": "/myapp.js"}
+  ]
+}
+```
+<Caption>
+  A{' '}
+  <GenericLink href="/docs/v2/deployments/routes/">
+    <InlineCode>"routes"</InlineCode> configuration
+  </GenericLink>{' '}
+  that redirects requests to a lambda if they match one of those three sources.
+</Caption>
+
+It is possible to enumerate those routes as they are in `myapp.js`. 
+The only thing we need to be careful is both the order of routes and the PCRE regex.
+To make sure everything will work when deployed to `now`, [`now dev`](https://zeit.co/blog/now-dev) is the recommended tool to test our deployments effortless.
+
+Since listing all routes in the `now.json` can be a time consuming task, we can take advantage of the PCRE regex in [`"src"`](https://zeit.co/docs/v2/deployments/routes/#src) and make it just one line:
+
+```json
+{
+  "version": 2,
+  "builds": [{"src": "myapp.js", "use": "@now/node"}],
+  "routes": [{"src": "/.*", "dest": "/myapp.js"}]
+}
 ```
 <Caption>
   A{' '}
@@ -128,6 +173,8 @@ Now 2.0, by default, handles the routing of your app like how files are arranged
   </GenericLink>{' '}
   that redirects every request to a single lambda.
 </Caption>
+
+To see the full specification for `"routes"` on our [documentation](/docs/v2/deployments/routes/). In the example above we are describing a "catch-all" route that will redirect all traffic to the lambda `myapp.js`.
 
 ## Step 3: Improving Performance
 
@@ -216,11 +263,11 @@ module.exports = app
   {' '} generating two lambdas.
 </Caption>
 
-You can do the same process for `owner`, if you want to further optimize this app.
+The same process can be applied to the routes of `owner`, if there is a need to further optimize this app.
 
 ## Step 4: Static Files
 
-It is common to use Express as the server that handles all the static assets of your application. However, you can avoid that and take advantage of `"routes"`, like this:
+It is common to use Express as the server that handles all the static assets of an application. However, we can avoid that and take advantage of `"routes"`, like this:
 
 ```json
 "builds": [
@@ -244,7 +291,7 @@ It is common to use Express as the server that handles all the static assets of 
   </GenericLink>.
 </Caption>
 
-When you use the [routing configuration](/docs/v2/deployments/routes) to serve those assets, you are avoiding a lambda invocation saving resources and costs. 
+When using the [routing configuration](/docs/v2/deployments/routes) to serve those assets, we are avoiding a lambda invocation saving resources and costs. 
 Of course the method above only works for files that are fully static, and not for templates or dynamic content.
 
 ## Resources
