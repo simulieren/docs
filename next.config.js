@@ -95,7 +95,8 @@ module.exports = phase => {
     // Allow mdx and md files to be pages
     pageExtensions: ['jsx', 'js', 'mdx', 'md'],
     experimental: {
-      flyingShuttle: true
+      flyingShuttle: true,
+      autoExport: true
     },
 
     assetPrefix: isExport ? '/docs' : '',
