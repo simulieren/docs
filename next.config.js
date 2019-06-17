@@ -94,6 +94,7 @@ module.exports = phase => {
   const config = {
     // Allow mdx and md files to be pages
     pageExtensions: ['jsx', 'js', 'mdx', 'md'],
+    target: 'serverless',
     experimental: {
       flyingShuttle: true,
       autoExport: true
