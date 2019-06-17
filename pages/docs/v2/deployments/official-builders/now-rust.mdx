@@ -1,3 +1,4 @@
+import { withAmp } from 'next/amp'
 import Doc from '~/components/layout/docs'
 import { TerminalInput } from '~/components/text/terminal'
 import { Code, InlineCode } from '~/components/text/code'
@@ -91,6 +92,12 @@ The example above can be seen live at <https://rust-kit-rm1x19uq8.now.sh/>.
 
 Also, the source code of the deployment can be checked by appending `/_src` e.g. <https://rust-kit-rm1x19uq8.now.sh/_src>.
 
+### Development
+
+The `now dev` command allows you to develop lambdas locally on your machine. With `now dev` and `@now/rust` you can develop your rust-based lamdas on your own machine.
+
+During local development with `now dev`, the assumption is that `rust` and `cargo` are already installed and available in your `PATH` since they will not be installed automatically. The recommended way to install `rust` and `cargo` on your machine is with [rustup](https://rustup.rs).
+
 ## Technical Details
 
 ### Entry Point
@@ -175,7 +182,20 @@ By default, [`openssl`](https://centos.pkgs.org/7/centos-x86_64/openssl-devel-1.
 
 ### Rust Version
 
-The version of Rust that this Builder supports is `1.31.1`
+This builder uses [rustup](https://rustup.rs) to install `rust` and `cargo`. By default, the latest stable version of rust will be installed. To see what the current stable version of rust is, please see the [official website](https://www.rust-lang.org/).
+
+If you need to use a different version of rust other than the latest stable version, you can specify a version of rust in your build's configuration. Accepted values are the same as [rustup's channel definition](https://github.com/rust-lang/rustup.rs/#toolchain-specification), which is `stable | latest | nightly | <version>`.
+
+<Example>
+  <span>
+    Example <InlineCode>rust</InlineCode> version configuration:
+  </span>
+  <Code lang="json">{`{
+  "builds": [
+    { "src": "Cargo.toml", "use": "@now/rust", "config": { "rust": "1.35" } }
+  ]
+}`}</Code>
+</Example>
 
 ### Maximum Lambda Bundle Size
 
@@ -206,4 +226,6 @@ The goal of the ZEIT Docs is to provide you with all the information you need to
   Discover the deployment basics of Now.
 </Card>
 
-export default ({ children }) => <Doc meta={meta}>{children}</Doc>
+export default withAmp(({ children }) => <Doc meta={meta}>{children}</Doc>, {
+  hybrid: true
+})

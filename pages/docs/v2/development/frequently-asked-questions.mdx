@@ -1,3 +1,4 @@
+import { withAmp } from 'next/amp'
 import Doc from '~/components/layout/docs'
 import { TerminalInput } from '~/components/text/terminal'
 import { GenericLink } from '~/components/text/link'
@@ -33,7 +34,7 @@ With that in mind, a few additional steps are necessary before your application 
 
 The following [Builders](/docs/v2/deployments/builders/overview) are currently supported for use within `now dev`:
 
-- [`@now/static`](docs/v2/deployments/official-builders/static-now-static)
+- [`@now/static`](/docs/v2/deployments/official-builders/static-now-static)
 - [`@now/static-build`](/docs/v2/deployments/official-builders/static-build-now-static-build/)
 - [`@now/node`](/docs/v2/deployments/official-builders/node-js-now-node/)
 - [`@now/node-server`](/docs/v2/deployments/official-builders/node-js-server-now-node-server/)
@@ -88,6 +89,10 @@ A look at our [examples](https://github.com/zeit/now-examples) is also recommend
 
 Your application's security is of paramount importance to us. An unencrypted `.env` file exposes you to a security risk — therefore we do not allow it. Use the [secrets](/docs/v2/deployments/environment-variables-and-secrets/) feature to protect your information by storing your variables safely in the cloud.
 
+##### How do I detect local development or cloud deployment?
+
+Sometimes you need to execute a different code path when your application is running locally compared to when it is running remotely in the cloud. All deployments expose a `NOW_REGION` environment variable which is assigned to the [region](/docs/v2/platform/regions-and-providers) where the [Lambda](/docs/v2/deployments/concepts/lambdas) is currently executing. This value is `dev1` for local development.
+
 ### Types of Projects
 
 ##### Does `now dev` work for all types of projects?
@@ -132,4 +137,6 @@ Extend your projects with all that Now offers:
   Learn more about our Priority Support and setup a Custom Domain Suffix.
 </Card>
 
-export default ({ children }) => <Doc meta={meta}>{children}</Doc>
+export default withAmp(({ children }) => <Doc meta={meta}>{children}</Doc>, {
+  hybrid: true
+})
