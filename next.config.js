@@ -96,7 +96,6 @@ module.exports = phase => {
     pageExtensions: ['jsx', 'js', 'mdx', 'md'],
     target: 'serverless',
     experimental: {
-      flyingShuttle: true,
       autoExport: true
     },
 

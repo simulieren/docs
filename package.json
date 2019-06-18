@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "./scripts/now-examples-fetch.sh && next",
-    "build": "./scripts/now-examples-fetch.sh && cross-env NODE_OPTIONS=\"--max_old_space_size=8096\" NODE_ENV=production next build",
+    "build": "./scripts/now-examples-fetch.sh && cross-env NODE_ENV=production next build",
     "now-build": "npm run build",
     "now-dev": "./scripts/now-examples-fetch.sh && next -p $PORT",
     "start": "cross-env NODE_ENV=production next start",
