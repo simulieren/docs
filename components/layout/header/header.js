@@ -370,23 +370,9 @@ class Header extends Component {
                 active={router.pathname.startsWith('/docs/api')}
                 onClick={handleIndexClick}
               >
-                API Reference
+                API
               </NavigationItem>
-              <NavigationItem
-                href="/examples"
-                active={router.pathname.startsWith('/examples')}
-                onClick={handleIndexClick}
-              >
-                Examples
-              </NavigationItem>
-              <NavigationItem
-                href="/docs/integrations"
-                active={router.pathname.startsWith('/docs/integrations')}
-                onClick={handleIndexClick}
-              >
-                Integrations
-              </NavigationItem>
-              <span className="desktop_search">{this.renderSearch()}</span>
+              {/*<span className="desktop_search">{this.renderSearch()}</span>*/}
             </span>
           )}
         </Navigation>
